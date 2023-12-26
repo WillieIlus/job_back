@@ -1,0 +1,25 @@
+# MySQL database files
+*.sql
+*.sql.gz
+*.dump
+
+# PyCharm IDE
+.idea/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info
+
+# Visual Studio Code IDE
+.vscode/
+
+# Environments
+env
+.env
+.venv
+
+# Python cache
+__pycache__/
+
+# macOS folder attributes
+.DS_Store
