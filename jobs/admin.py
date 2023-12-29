@@ -1,5 +1,6 @@
 from django.contrib import admin
-
+from django.db import models
+from markdownx.widgets import AdminMarkdownxWidget
 from .models import Job, JobApplication, Impression, Click
 
 
@@ -9,6 +10,11 @@ class JobAdmin(admin.ModelAdmin):
     list_filter = ('category', 'company', 'location', 'is_active')
     search_fields = ('title', 'description', 'requirements', 'company__name', 'location__name')
     list_per_page = 20
+
+    formfield_overrides = {
+        models.TextField: {'widget': AdminMarkdownxWidget},
+    }
+
 
 class JobApplicationAdmin(admin.ModelAdmin):
     list_display = ('job', 'user', 'is_active')

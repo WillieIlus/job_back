@@ -1,9 +1,13 @@
 import datetime
+from django.utils import timezone
+from datetime import timedelta
+from django.utils import timezone
+
 import random, string
 from datetime import datetime, timedelta, timezone, date
 from decimal import Decimal
 from django.db import models
-
+from django.utils import timezone
 from django.urls import reverse
 from django.utils.text import slugify
 from django.utils import timezone
@@ -13,17 +17,19 @@ from django.utils.timesince import timesince
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from markdownx.models import MarkdownxField
 
 from locations.models import Location
 from categories.models import Category
 from companies.models import Company
 from plans.models import Plan
 
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
-
 random_string = ''.join(random.choices(string.digits, k=10))
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Job(models.Model):
     # Job Type
@@ -96,15 +102,16 @@ class Job(models.Model):
     phone = models.CharField(max_length=200, blank=True, null=True)
     image = models.ImageField(upload_to='jobs/images/', blank=True, null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
-    description = models.TextField(max_length=2000, blank=True, null=True)
-    requirements = models.TextField(max_length=2000, blank=True, null=True)
-    responsibilities = models.TextField(max_length=2000, blank=True, null=True)
+    description = MarkdownxField(max_length=2000, blank=True, null=True)
+    requirements = MarkdownxField(max_length=2000, blank=True, null=True)
+    responsibilities = MarkdownxField(max_length=2000, blank=True, null=True)
 
-    duration_days = models.PositiveIntegerField(default=30, validators=[MinValueValidator(1), MaxValueValidator(365)], blank=True, null=True)
+    duration_days = models.PositiveIntegerField(default=30, validators=[MinValueValidator(1), MaxValueValidator(365)],
+                                                blank=True, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     job_type = models.CharField(max_length=20, choices=JOB_TYPE_CHOICES, default=FULL_TIME, blank=True, null=True)
     salary = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    salary_type = models.CharField(max_length=2, choices=SALARY_TYPE_CHOICES, default=PER_MONTH, blank=True, null=True )
+    salary_type = models.CharField(max_length=2, choices=SALARY_TYPE_CHOICES, default=PER_MONTH, blank=True, null=True)
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=KSH, blank=True, null=True)
 
     work_experience = models.IntegerField(blank=True, null=True)
@@ -125,6 +132,10 @@ class Job(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deadline = models.DateTimeField(blank=True, null=True)
 
+    last_viewed_at = models.DateTimeField(null=True, blank=True)
+    last_clicked_at = models.DateTimeField(null=True, blank=True)
+
+
     class Meta:
         verbose_name_plural = "Jobs"
         ordering = ['-created_at']
@@ -135,6 +146,13 @@ class Job(models.Model):
     def __str__(self):
         return self.title + ' - ' + str(self.id)
 
+    def update_last_viewed(self):
+        self.last_viewed_at = timezone.now()
+        self.save()
+
+    def update_last_clicked(self):
+        self.last_clicked_at = timezone.now()
+        self.save()
     def get_absolute_url(self):
         return reverse('jobs:detail', kwargs={'slug': self.slug})
 
@@ -169,7 +187,6 @@ class Job(models.Model):
             return max(days_left, 0)
         return None
 
-
     def save(self, *args, **kwargs):
         self.slug = slugify(self.title + ' - ' + random_string)  # use random_string instead of self.id
         super(Job, self).save(*args, **kwargs)
@@ -188,7 +205,7 @@ class JobApplication(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return self.job.title  + ' - ' + self.job.id
+        return self.job.title + ' - ' + self.job.id
 
     def get_resume_url(self):
         return reverse('jobs:resume', kwargs={'pk': self.pk})
@@ -215,18 +232,27 @@ class Impression(models.Model):
     class Meta:
         verbose_name_plural = "Impressions"
         ordering = ['-created_at']
+        index_together = ('job', 'session_id',)
 
     def __str__(self):
         return self.job.title + ' - ' + self.source_ip
 
     def get_impressions_count(self):
-        return self.objects.count()
+        return Click.objects.filter(job=self.job).count()
 
     def get_impressions(self):
-        return self.objects.all()
+        return Click.objects.filter(job=self.job)
 
     def save(self, *args, **kwargs):
         super(Impression, self).save(*args, **kwargs)
+
+
+# @receiver(post_save, sender=Impression)
+# def update_job_view_count(sender, instance, created, **kwargs):
+#     if created:  # only update the view count if a new impression is created
+#         job = instance.job  # get the job associated with the impression
+#         job.view_count += 1  # increment the view count by one
+#         job.save()
 
 
 class Click(models.Model):
@@ -238,18 +264,34 @@ class Click(models.Model):
     class Meta:
         verbose_name_plural = "Clicks"
         ordering = ['-created_at']
+        index_together = ('job', 'session_id',)
 
     def __str__(self):
         return self.job.title + ' - ' + self.source_ip
 
     def get_clicks_count(self):
-        return self.objects.count()
+        return Click.objects.filter(job=self.job).count()
 
     def get_clicks(self):
-        return self.objects.all()
+        return Click.objects.filter(job=self.job)
 
     def save(self, *args, **kwargs):
         super(Click, self).save(*args, **kwargs)
 
-        
+
+@receiver(post_save, sender=Impression)
+def update_job_view_count(sender, instance, created, **kwargs):
+    if created:
+        job = instance.job
+        print(f"Updating view count for Job ID {job.id}")
+        job.view_count += 1
+        job.save()
+
+@receiver(post_save, sender=Click)
+def update_job_click_count(sender, instance, created, **kwargs):
+    if created:
+        job = instance.job
+        print(f"Updating click count for Job ID {job.id}")
+        job.click_count += 1
+        job.save()
 
