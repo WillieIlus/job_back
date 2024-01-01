@@ -188,7 +188,8 @@ class Job(models.Model):
         return None
 
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.title + ' - ' + random_string)  # use random_string instead of self.id
+        if not self.slug:  # Only generate the slug if it's not already set
+            self.slug = slugify(self.title + ' - ' + random_string)
         super(Job, self).save(*args, **kwargs)
 
 

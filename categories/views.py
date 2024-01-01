@@ -5,11 +5,14 @@ from .serializers import CategorySerializer
 
 
 class CategoryListAPIView(ListCreateAPIView):
-        queryset = Category.objects.all()
-        serializer_class = CategorySerializer
-        
+    queryset = Category.objects.with_jobs_count()
+    # queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+
 class CategoryDetailAPIView(RetrieveUpdateDestroyAPIView):
-        queryset = Category.objects.all()
-        serializer_class = CategorySerializer
-        lookup_field = 'slug'
-        lookup_url_kwarg = 'category_slug'
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'category_slug'
