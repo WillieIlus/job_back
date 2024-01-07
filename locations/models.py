@@ -22,7 +22,8 @@ class Country(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.name)
+        if not self.slug:
+            self.slug = slugify(self.name)
         super(Country, self).save(*args, **kwargs)
 
 
@@ -51,7 +52,8 @@ class Location(models.Model):
         return self.jobs.filter(active=True).count()
 
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.name)
+        if not self.slug:
+            self.slug = slugify(self.name)
         super(Location, self).save(*args, **kwargs)
 
     def get_absolute_url(self):

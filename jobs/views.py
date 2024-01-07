@@ -14,6 +14,13 @@ from .serializers import (
 )
 from .filters import JobFilter
 
+class TopJobs(ListAPIView):
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer
+    lookup_field = 'slug'
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = JobFilter
+
 class JobList(ListCreateAPIView):
     queryset = Job.objects.all()
     serializer_class = JobSerializer

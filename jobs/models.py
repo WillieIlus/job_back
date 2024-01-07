@@ -26,7 +26,7 @@ from categories.models import Category
 from companies.models import Company
 from plans.models import Plan
 
-random_string = ''.join(random.choices(string.digits, k=10))
+random_string = ''.join(random.choices(string.digits, k=6))
 import logging
 
 logger = logging.getLogger(__name__)
@@ -102,9 +102,9 @@ class Job(models.Model):
     phone = models.CharField(max_length=200, blank=True, null=True)
     image = models.ImageField(upload_to='jobs/images/', blank=True, null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
-    description = MarkdownxField(max_length=2000, blank=True, null=True)
-    requirements = MarkdownxField(max_length=2000, blank=True, null=True)
-    responsibilities = MarkdownxField(max_length=2000, blank=True, null=True)
+    description = MarkdownxField(max_length=4000, blank=True, null=True)
+    requirements = MarkdownxField(max_length=4000, blank=True, null=True)
+    responsibilities = MarkdownxField(max_length=4000, blank=True, null=True)
 
     duration_days = models.PositiveIntegerField(default=30, validators=[MinValueValidator(1), MaxValueValidator(365)],
                                                 blank=True, null=True)
@@ -188,8 +188,10 @@ class Job(models.Model):
         return None
 
     def save(self, *args, **kwargs):
-        if not self.slug:  # Only generate the slug if it's not already set
-            self.slug = slugify(self.title + ' - ' + random_string)
+        if not self.slug:
+            self.slug = slugify(self.title)
+            while Job.objects.filter(slug=self.slug).exists():
+                self.slug = slugify(self.title + ' - ' + random_string)
         super(Job, self).save(*args, **kwargs)
 
 

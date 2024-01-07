@@ -1,3 +1,4 @@
+from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
 
 from .models import Country, Location
@@ -7,7 +8,7 @@ class CountryAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
 
 
-class LocationAdmin(admin.ModelAdmin):
+class LocationAdmin(ImportExportModelAdmin):
     list_display = ('name', 'slug', 'country', 'flag')
     prepopulated_fields = {'slug': ('name',)}
 

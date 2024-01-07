@@ -1,10 +1,14 @@
+from import_export.admin import ImportExportModelAdmin
+
 from django.contrib import admin
 from django.db import models
 from markdownx.widgets import AdminMarkdownxWidget
 from .models import Job, JobApplication, Impression, Click
+from .resource import JobResource
 
 
-class JobAdmin(admin.ModelAdmin):
+class JobAdmin(ImportExportModelAdmin):
+    resource_class = JobResource
     list_display = ('title', 'slug', 'category', 'company', 'location', 'is_active')
     prepopulated_fields = {'slug': ('title',)}
     list_filter = ('category', 'company', 'location', 'is_active')
@@ -22,11 +26,13 @@ class JobApplicationAdmin(admin.ModelAdmin):
     search_fields = ('job__title', 'user__username')
     list_per_page = 20
 
+
 class ImpressionAdmin(admin.ModelAdmin):
     list_display = ('job', 'source_ip', 'session_id', 'created_at')
     list_filter = ('job', 'source_ip', 'session_id')
     search_fields = ('job__title', 'source_ip', 'session_id')
     list_per_page = 20
+
 
 class ClickAdmin(admin.ModelAdmin):
     list_display = ('job', 'source_ip', 'session_id', 'created_at')
@@ -34,9 +40,8 @@ class ClickAdmin(admin.ModelAdmin):
     search_fields = ('job__title', 'source_ip', 'session_id')
     list_per_page = 20
 
+
 admin.site.register(Job, JobAdmin)
 admin.site.register(JobApplication, JobApplicationAdmin)
 admin.site.register(Impression, ImpressionAdmin)
 admin.site.register(Click, ClickAdmin)
-
-

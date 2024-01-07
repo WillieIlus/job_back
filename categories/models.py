@@ -30,7 +30,9 @@ class Category(models.Model):
         return reverse('categories:detail', kwargs={'slug': self.slug})
 
     def save(self, *args, **kwargs):
-        self.job_count = self.get_active_jobs_count()
+        if not self.slug:
+            self.slug = slugify(self.name)
+        # self.job_count = self.get_active_jobs_count()
         super(Category, self).save(*args, **kwargs)
 
     def get_jobs(self):

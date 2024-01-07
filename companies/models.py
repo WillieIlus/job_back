@@ -20,7 +20,7 @@ class Company(models.Model):
     email = models.EmailField(verbose_name=_('Email'), blank=True, null=True)
     address = models.CharField(max_length=255, verbose_name=_('Specific location'), blank=True, null=True)
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('User'), related_name='companies')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('User'), related_name='companies', blank=True, null=True)
     category = models.ForeignKey(Category, null=True, blank=True,  on_delete=models.CASCADE, verbose_name=_('Category'), related_name='companies')
     location = models.ForeignKey(Location, null=True, blank=True,  on_delete=models.CASCADE, verbose_name=_('Location'), related_name='companies')
 
