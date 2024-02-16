@@ -11,25 +11,25 @@ from categories.models import Category
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'
+        fields = 'first_name', 'last_name', 'email', 'phone'
 
 
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
-        fields = '__all__'
+        fields = 'name', 'logo', 'website', 'description'
 
 
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = '__all__'
+        fields = 'name', 'slug'
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = 'name', 'slug'
 
 
 class JobSerializer(serializers.ModelSerializer):
@@ -37,6 +37,10 @@ class JobSerializer(serializers.ModelSerializer):
     company = CompanySerializer(required=False)
     location = LocationSerializer(required=False)
     category = CategorySerializer(required=False)
+    get_user = serializers.CharField(source='user', required=False)
+    get_company = serializers.CharField(source='company', required=False)
+    get_location = serializers.CharField(source='location', required=False)
+    get_category = serializers.CharField(source='category', required=False)
     applicants = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
     timesince = serializers.SerializerMethodField(required=False)
     get_job_type = serializers.CharField(source='job_type', required=False)
@@ -54,7 +58,7 @@ class JobSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Job
-        fields = '__all__'
+        fields = 'title', 'slug', 'view_count', 'click_count', 'get_user', 'get_company', 'get_location', 'user', 'get_category', 'company', 'location', 'category', 'job_type', 'description',  'salary', 'currency', 'created_at', 'updated_at', 'is_active',  'applicants', 'timesince', 'get_job_type', 'get_created_at', 'days_left', 'plan_title', 'views_count', 'click_count'
         read_only_fields = ('created_at', 'updated_at', 'is_active', 'slug')
 
 

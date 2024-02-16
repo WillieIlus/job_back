@@ -14,6 +14,7 @@ class CountryList(ListCreateAPIView):
             return [IsAuthenticated()]
         return []
 
+
     # def create(self, validated_data):
     #     # Handle the uploaded file directly without converting to base64
     #     flag = validated_data.pop('image', None)

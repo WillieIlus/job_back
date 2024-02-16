@@ -31,28 +31,20 @@ class JobList(ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated()]
+        return []
+    
 
-        for job in self.get_queryset():
-            # Check if it's been more than 30 minutes since the last view for the same IP
-            if (
-                job.last_viewed_at is None
-                or timezone.now() - job.last_viewed_at > timedelta(minutes=30)
-            ):
-                source_ip = request.META.get('REMOTE_ADDR')
+class JobListByUser(ListAPIView):
+    serializer_class = JobSerializer
+    lookup_field = 'slug'
 
-                # Check if there is no previous impression from the same IP within 30 minutes
-                if not Impression.objects.filter(
-                    job=job, source_ip=source_ip, created_at__gte=timezone.now() - timedelta(minutes=30)
-                ).exists():
-                    job.view_count += 1
-                    job.update_last_viewed()
+    def get_queryset(self):
+        user = self.kwargs['user']
+        return Job.objects.filter(user=self.request.user)
 
-                    impression = Impression(job=job, source_ip=source_ip)
-                    impression.save()
-
-        return response
 
 class JobDetail(RetrieveUpdateDestroyAPIView):
     queryset = Job.objects.all()
@@ -108,12 +100,25 @@ class ImpressionList(ListCreateAPIView):
         job.view_count += 1
         job.save()
 
-class ImpressionDetail(RetrieveUpdateDestroyAPIView):
-    serializer_class = ImpressionSerializer
-    lookup_field = 'slug'
+        # Check if it's been more than 30 minutes since the last impression for the same IP
+        if (
+                job.last_impression_at is None
+                or timezone.now() - job.last_impression_at > timedelta(minutes=30)
+        ):
+            source_ip = self.request.META.get('REMOTE_ADDR')
+
+            # Check if there is no previous impression from the same IP within 30 minutes
+            if not Impression.objects.filter(
+                    job=job, source_ip=source_ip, created_at__gte=timezone.now() - timedelta(minutes=30)
+            ).exists():
+                job.view_count += 1
+                job.update_last_viewed()
+
+                impression = Impression(job=job, source_ip=source_ip)
+                impression.save()
+
 
 class ClickList(ListCreateAPIView):
-    queryset = Click.objects.all()
     serializer_class = ClickSerializer
     lookup_field = 'slug'
 
@@ -125,10 +130,39 @@ class ClickList(ListCreateAPIView):
         job_id = self.kwargs['job_id']
         job = Job.objects.get(id=job_id)
         serializer.save(job=job)
-        job.view_count += 1
+        job.click_count += 1
         job.save()
+
+        # Save source IP and session ID
+        source_ip = self.request.META.get('REMOTE_ADDR')
+        session_id = self.request.session.session_key
+        serializer.save(source_ip=source_ip, session_id=session_id)
+
+        # Check if it's been more than 30 minutes since the last click for the same IP
+        if (
+                job.last_click_at is None
+                or timezone.now() - job.last_click_at > timedelta(minutes=30)
+        ):
+            source_ip = self.request.META.get('REMOTE_ADDR')
+
+            # Check if there is no previous click from the same IP within 30 minutes
+            if not Click.objects.filter(
+                    job=job, source_ip=source_ip, created_at__gte=timezone.now() - timedelta(minutes=30)
+            ).exists():
+                job.click_count += 1
+                job.update_last_clicked()
+
+                click = Click(job=job, source_ip=source_ip)
+                click.save()
+
+
+class ImpressionDetail(RetrieveUpdateDestroyAPIView):
+    serializer_class = ImpressionSerializer
+    lookup_field = 'slug'
 
 class ClickDetail(RetrieveUpdateDestroyAPIView):
     queryset = Click.objects.all()
     serializer_class = ClickSerializer
     lookup_field = 'slug'
+
+

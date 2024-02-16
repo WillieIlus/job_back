@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 # allowed_hosts = config('ALLOWED_HOSTS')
-ALLOWED_HOSTS = [ 'localhost',  'willieilus.pythonanywhere.com']
+ALLOWED_HOSTS = [ '127.0.0.1',  'willieilus.pythonanywhere.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -64,8 +64,8 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "http://localhost:3001",
-    "https://alfajiri.netlify.app",
+    "https://alfajirijobs.netlify.app",
+    "https://alfajirijobs.com",
 ]
 
 REST_FRAMEWORK = {

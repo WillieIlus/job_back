@@ -5,12 +5,13 @@ from django.db import models
 from markdownx.widgets import AdminMarkdownxWidget
 from .models import Job, JobApplication, Impression, Click
 from .resource import JobResource
+from import_export.admin import ImportExportModelAdmin
 
 
 class JobAdmin(ImportExportModelAdmin):
     resource_class = JobResource
-    list_display = ('title', 'slug', 'category', 'company', 'location', 'is_active')
-    prepopulated_fields = {'slug': ('title',)}
+    list_display = ('title', 'view_count', 'click_count', 'slug', 'category', 'company', 'location', 'is_active')
+    prepopulated_fields = {'slug': ('title', 'company')}
     list_filter = ('category', 'company', 'location', 'is_active')
     search_fields = ('title', 'description', 'requirements', 'company__name', 'location__name')
     list_per_page = 20

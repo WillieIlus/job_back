@@ -11,15 +11,25 @@ from .serializers import CompanySerializer
 class CompanyListCreateAPIView(ListCreateAPIView):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
-    parser_classes = (MultiPartParser, FormParser)
+    # parser_classes = (MultiPartParser, FormParser)
     lookup_field = 'slug'
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated()]
+        return []
+    
 
+class CompanyByUserListAPIView(ListAPIView):
+    serializer_class = CompanySerializer
+    lookup_field = 'slug'
 
-
+    def get_queryset(self):
+        user = self.kwargs['user']
+        return Company.objects.filter(user=self.request.user)
 
 
 class CompanyRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
@@ -37,13 +47,13 @@ class CompanyRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     
 
 
-class MyCompanyListAPIView(ListAPIView):
-    serializer_class = CompanySerializer
-    # authentication_classes = (TokenAuthentication,)
-    # permission_classes = (IsAuthenticated,)
-    lookup_field = 'slug'
+# class MyCompanyListAPIView(ListAPIView):
+#     serializer_class = CompanySerializer
+#     # authentication_classes = (TokenAuthentication,)
+#     # permission_classes = (IsAuthenticated,)
+#     lookup_field = 'slug'
 
-    def get(self, request, *args, **kwargs  ):
-        companies =  Company.objects.filter(user=self.request.user)
-        serializer = CompanySerializer(companies, many=True)
-        return Response(serializer.data)
+#     def get(self, request, *args, **kwargs  ):
+#         companies =  Company.objects.filter(user=self.request.user)
+#         serializer = CompanySerializer(companies, many=True)
+#         return Response(serializer.data)

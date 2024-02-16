@@ -28,8 +28,11 @@ from plans.models import Plan
 
 random_string = ''.join(random.choices(string.digits, k=6))
 import logging
+from django.utils.text import slugify
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
+
 
 class Job(models.Model):
     # Job Type
@@ -135,7 +138,6 @@ class Job(models.Model):
     last_viewed_at = models.DateTimeField(null=True, blank=True)
     last_clicked_at = models.DateTimeField(null=True, blank=True)
 
-
     class Meta:
         verbose_name_plural = "Jobs"
         ordering = ['-created_at']
@@ -153,6 +155,7 @@ class Job(models.Model):
     def update_last_clicked(self):
         self.last_clicked_at = timezone.now()
         self.save()
+
     def get_absolute_url(self):
         return reverse('jobs:detail', kwargs={'slug': self.slug})
 
@@ -176,6 +179,9 @@ class Job(models.Model):
 
     def get_category(self):
         return self.category.name
+    
+    def get_company(self):
+        return self.company.name
 
     def get_job_type(self):
         return self.get_job_type_display()
@@ -187,12 +193,16 @@ class Job(models.Model):
             return max(days_left, 0)
         return None
 
+
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title)
-            while Job.objects.filter(slug=self.slug).exists():
-                self.slug = slugify(self.title + ' - ' + random_string)
-        super(Job, self).save(*args, **kwargs)
+            title_str = str(self.title)
+            company_str = str(self.company)  
+            self.slug = slugify(title_str + ' ' + company_str)
+        super().save(*args, **kwargs)
+
+
+
 
 
 class JobApplication(models.Model):
@@ -290,6 +300,7 @@ def update_job_view_count(sender, instance, created, **kwargs):
         job.view_count += 1
         job.save()
 
+
 @receiver(post_save, sender=Click)
 def update_job_click_count(sender, instance, created, **kwargs):
     if created:
@@ -297,4 +308,3 @@ def update_job_click_count(sender, instance, created, **kwargs):
         print(f"Updating click count for Job ID {job.id}")
         job.click_count += 1
         job.save()
-

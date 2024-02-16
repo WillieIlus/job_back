@@ -2,12 +2,12 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView, ListCreateAPIV
 
 from .models import Category
 from .serializers import CategorySerializer
-
+from rest_framework import filters
 
 class CategoryListAPIView(ListCreateAPIView):
-    queryset = Category.objects.with_jobs_count()
-    # queryset = Category.objects.all()
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
 
 class CategoryDetailAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
